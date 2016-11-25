@@ -1,3 +1,22 @@
+/*Department of Electrical and Computer Engineering
+ * University of Puerto Rico at Mayaguez
+ * ICOM-4075 - Computer Foundations
+ * Dr. Kejie Lu
+ * 
+ * Pedro Luis Rivera
+ * Undergraduate Computer Engineering Student
+ * November 25, 2016
+ * This program consists in an implementation of the Bellman-Ford algorithm, to find the shortest path
+ * of a closed graph which is given in a text file. It don't take under consideration negative weights...
+ * 
+ * The following is an example of how the text file should be written:
+ * 
+ * 3
+ * 1 CA 2 2 100 3 50 // Node 1 is named CA, has 2 adjacencies and the first one is with node 2 and its distance is 100, the second with node 3 and the distance is 50...
+ * 2 NY 1 1 100 // Node 2 is named NY and has only one adjacency... it is neighbor of Node 1 and the distance is 100...
+ * 3 NJ 1 1 50  // Node 3 is named NJ and has only one adjacency... in is neighbor of Node 1 and the distance is 50...
+ * 
+ * */
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -11,25 +30,53 @@ public class ShortestPath {
 	private static int distance;
 
 	public static void main(String[] args) throws FileNotFoundException {
+		System.out.println("Hi! Thanks for usign the Shortest Path Finder...");
+		System.out.println("Please select the MAP file...");
+		int source, target;
 		readFile();
 		fillGraph();
 		fillEdges();
-		pathFinder(12, 3);
-		displayResults();
-		cleanArrays();
-		pathFinder(1, 10);
-		displayResults();
-		cleanArrays();
-		pathFinder(2, 13);
-		displayResults();
+		reader = new Scanner(System.in);
+		do{
+			System.out.println("Please enter the reference number for the Source Node...");
+			do{
+				while(!reader.hasNextInt()){
+					System.out.println("Please enter a positive integer value for the Source");
+					reader.next();
+				}
+				source = reader.nextInt();
+				if(source < 1){ System.out.println("ERROR: Source must be greater than 0...");}
+
+			}while(source < 1);
+			System.out.println("Please enter the reference number for the Target Node...");
+			do{
+				while(!reader.hasNextInt()){
+					System.out.println("Please enter a positive integer value for the Target");
+					reader.next();
+				}
+				target = reader.nextInt();
+				if(target < 1){ System.out.println("ERROR: Target must be greater than 0...");}
+
+			}while(target < 1);
+			pathFinder(source, target);
+			displayResults();
+			cleanArrays();
+			System.out.println("Enter any key to continue or enter end to finish the program...");
+		}while(!reader.next().equals("end"));
+		System.out.println("Thanks for using the Shortest Path Finder...");
 	}
 	
+	/*This method cleans the path array in order to find a new Shortest Path...
+	 * It doesn't return any value...
+	 * */
 	public static void cleanArrays(){
 		distance = 0;
 		path.clear();
 	}
 
-	// Reads the text file...
+	/*This method finds the location of the text file and use the first line to determine the amount of Nodes...
+	 * It doesn't return any value...
+	 * */
 	public static void readFile() throws FileNotFoundException{
 		JFileChooser fileChooser = new JFileChooser();
 		if(fileChooser.showOpenDialog(null) == fileChooser.APPROVE_OPTION){
@@ -38,7 +85,10 @@ public class ShortestPath {
 			else throw new FileNotFoundException("Only integers...");
 		}
 	}
-	// Fill each node with its neighbors and distances...
+	
+	/*This method fills the Node array (junctions)
+	 * It doesn't return any value...
+	 * */
 	public static void fillGraph(){
 		for(int i = 0; i < junctions.length; i++){
 			junctions[i] = new Node();
@@ -55,7 +105,10 @@ public class ShortestPath {
 		}
 		reader.close();
 	}
-	// Creates the adjacency-length relation...
+	
+	/*This method initializes the edges array...
+	 * It doesn't return any value...
+	 * */
 	public static void fillEdges(){
 		for(int i = 0; i < junctions.length; i++){
 			for(int j = 0; j < junctions[i].getAdjacencies().length; j++){
@@ -63,14 +116,17 @@ public class ShortestPath {
 			}
 		}
 	}
-	// Implementing Bellman-Ford Algorithm...
+	
+	/*This method is an implementation of the Bellman-Ford algorithm without considering negative cycles...
+	 * @param a is the source index and b is the target index...
+	 * It doesn't return any value...
+	 * */
 	public static void pathFinder(int a, int b){
 		if(a == b){
 			path.add(a);
 			distance = 0;
 			return;
 		}
-		//ArrayList<Integer> dist = new ArrayList<Integer>();
 		for(Node n : junctions){
 			if(n.getReference() == a){ n.setDistFromSource(0); }
 			else n.setDistFromSource(Integer.MAX_VALUE);
@@ -83,31 +139,26 @@ public class ShortestPath {
 					c.getTail().setDistFromSource(c.getStart().getDistFromSource() + c.getLenght());
 					c.getTail().setPrevNode(c.getStart().getReference());
 				}
-//				if(dist.get(c.getStart().getReference()-1) + c.getLenght() < dist.get(c.getTail().getReference()-1)){
-//					dist.set(c.getTail().getReference()-1, dist.get(c.getStart().getReference()-1) + c.getLenght());
-//					junctions[c.getTail().getReference()-1].setPrevNode(c.getStart().getReference()); 
-//					//c.getTail().setPrevNode(c.getStart().getReference());
-//					//System.out.println(c.getTail().getPrevNode());
-//				}
 			}
 		}
 		pathCatcher(b, a);
-		//distance = dist.get(path.size()-1);
-		//		calculateDistance(dist);
-		//		for(int i = 0; i < edges.size(); i++){
-		//			if(edges.get(i).getStart().getReference() == b){ pathCatcher(i, "start", a); }
-		//			else if(edges.get(i).getTail().getReference() == b){ pathCatcher(i, "tail", a); }
-		//		}
-
 	}
-
+	
+	/*This method determines wether two nodes are adjacent or not...
+	 * @param a and b represents the nodes under consideration...
+	 * @return returns true if nodes a and b are adjacent, else returns false...
+	 * */
 	public static boolean areAdjacent(Node a, Node b){
 		for(int i = 0; i < a.getAdjacencies().length; i++){ 
 			if(a.getAdjacencies()[i] == b.getReference()){ return true; }
 		}
 		return false;
 	}
-
+	
+	/*This method returns the distance between 2 nodes a and b...
+	 * @param a and b are the indexes of the nodes (on junctions)
+	 * @return returns the distance value from node a to node b.
+	 * */
 	public static int distanceFrom(int a, int b){
 		Node l = junctions[a-1]; 
 		Node m = junctions[b-1];
@@ -118,26 +169,35 @@ public class ShortestPath {
 		}
 		return Integer.MAX_VALUE;
 	}
-
+	
+	/*This method calculates the total distance of the shortest path...
+	 * @param It accepts an ArrayList with the path under consideration...
+	 * It doesn't return any value...
+	 * */
 	public static void calculateDistance(ArrayList<Integer> dist){
 		distance = 0;
 		for(int i = 1; i < path.size(); i++){
 			distance += distanceFrom(path.get(i-1), path.get(i));
 		}
 	}
-
+	
+	/*This method goes backwards... From the target to the source and adds to the path every previous node until it reaches the source...
+	 * @param it accepts the endingNode and the startNode indexes...
+	 * This method doesn't return any value...
+	 * */
 	public static void pathCatcher(int endingNode, int startNode){
 		Node lastNode = junctions[endingNode-1];
-		//System.out.println(lastNode.getReference());
 		path.add(lastNode.getReference());
 		while(lastNode.getPrevNode() != startNode){
 			lastNode = junctions[lastNode.getPrevNode()-1];
 			path.add(lastNode.getReference());
 		}
 		path.add(junctions[startNode-1].getReference());
-		//System.out.println(path.toString());
 	}
-
+	
+	/*This method displays the results of the Shortest Path...
+	 * It just print the results, doesn't return any value...
+	 * */
 	public static void displayResults(){
 		int j;
 		for(int i = 0; i < path.size()/2; i++){
@@ -145,17 +205,18 @@ public class ShortestPath {
 			path.set(path.size() - i - 1, path.get(i));
 			path.set(i, j);
 		}
-		System.out.println("The shortest path is the one who passes by the nodes: "+path.toString());//needs arguments...
-		System.out.println("It means that it passes through the following Airports: ");//needs arguments...
+		System.out.println("The shortest path between "+ junctions[path.get(0)-1].getName() +" and "+junctions[path.get(path.size()-1)-1].getName()+" is the one that passes by the nodes: "+path.toString());
+		System.out.println("It means that it passes through the following Airports: ");
 		for(int i = 0; i < path.size(); i++){
 			System.out.println("     "+junctions[path.get(i)-1].getName());
 		}
 		calculateDistance(path);
 		System.out.println("The total distance traveled is: "+ distance + " Kilometers.");
 	}
-
 }
 
+/*This class represents a Node (or Vertex)...
+ * */
 class Node {
 	private String name;
 	private int reference;
@@ -185,7 +246,10 @@ class Node {
 	public int getDistFromSource(){ return this.distFromSource; }
 }
 
-
+/*This class creates the connection or edge between 2 adjacent nodes...
+ * In order to create a connection, starting and ending node are needed.
+ * Also it needs the lenght (since we are dealing with weighted graphs...)
+ * */
 class Connection{
 	private Node start;
 	private Node tail;
